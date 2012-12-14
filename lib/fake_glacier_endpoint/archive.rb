@@ -7,7 +7,7 @@ module FakeGlacierEndpoint
       archive_id = Archive.mint_archive_id
       a = Archive.new(vault, archive_id)
    
-      a.description = options[:archive_description]
+      a.description = options.fetch(:archive_description, '')
 
       a
   	end
@@ -25,7 +25,7 @@ module FakeGlacierEndpoint
 
     def content= file
       ppath.open('content', 'w') do |f|
-        f.write file
+        f.write file.to_s
       end
     end
 
@@ -50,7 +50,7 @@ module FakeGlacierEndpoint
     end
 
     def sha256
-
+      ''
     end
 
     def description_tag

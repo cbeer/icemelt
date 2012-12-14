@@ -1,5 +1,5 @@
 require 'sinatra'
-require 'sinatra/json'
+require 'json'
 require 'namaste'
 require 'anvl'
 require 'noid'
@@ -20,126 +20,123 @@ module FakeGlacierEndpoint
     end
 
   	# Create Vault
-    put ':account_id/vaults/:vault_name' do
+    put '/:account_id/vaults/:vault_name' do
       status 201
       headers \
         "Date" => '',
         "Location" => request.fullpath
       Vault.create(data_root, params[:vault_name])
+
+      nil
     end
     
     # Delete Vault
-    delete ':account_id/vaults/:vault_name' do
+    delete '/:account_id/vaults/:vault_name' do
       status 204
       headers \
         "Date" => ''
       vault(params[:vault_name]).delete
+
+      nil
     end
 
     # Describe Vault
-    get ':account_id/vaults/:vault_name' do
+    get '/:account_id/vaults/:vault_name' do
       status 200
 
       v = vault(params[:vault_name])
+      headers \
+        "Content-Type" => 'application/json'
 
-      json({
-      	'CreationDate' => v.create_date,
-      	'LastInventoryDate' => v.last_inventory_date,
-      	'NumberOfArchives' => v.count,
-      	'SizeInBytes' => v.size,
-      	'VaultARN' => v.id,
-      	'VaultName' => params[:vault_name]
-      })
+      v.to_json
     end
 
     # List Vaults
-    get ':account_id/vaults' do
+    get '/:account_id/vaults' do
       vaults = Vault.list(data_root)
 
       status 200
 
-      json({
-        "Marker" => nil,
-        "VaultList" => 
-           vaults.map { |v|
-             {
-               "CreationDate" => v.create_date,
-               "LastInventoryDate" => v.last_inventory_date,
-               "NumberOfArchives" => v.count,
-               "SizeInBytes" => v.size,
-               "VaultARN" => v.id,
-               "VaultName" => v.id
-             }
-           }
-        
+      headers \
+        "Content-Type" => 'application/json'
 
-      	})
+      {
+        "Marker" => nil,
+        "VaultList" => vaults.map(&:to_json)
+      	}.to_json
+
     end
 
     # Upload Archive
-    post ':account_id/vaults/:vault_name/archives' do
+    post '/:account_id/vaults/:vault_name/archives' do
       status 201
+
+      options = {}
+      options[:archive_description] = request['x-amz-archive-description']
+      
       a = Archive.create(vault(params[:vault_name]), options)
-      a.content = f
+      a.content = request.body.read
 
       headers \
-        "Date" => Time.now,
+        "Date" => Time.now.strftime('%c'),
         "x-amz-sha256-tree-hash" => a.sha256,
-        "Location" => '',
+        "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/archives/#{a.id}",
         "x-amz-archive-id" => a.id
+
+      nil  
     end
 
     # Delete Archive
-    delete ':account_id/vaults/:vault_name/archives/:archive_id' do
+    delete '/:account_id/vaults/:vault_name/archives/:archive_id' do
       status 204
 
       Archive.new(vault(params[:vault_name]), params[:archive_id]).delete
     
       headers \
         "Date" => Time.now
+
+      nil
     end
 
     # Multipart Upload
 
     # Initiate a Job
-    post ':account_id/vaults/:vault_name/jobs' do
+    post '/:account_id/vaults/:vault_name/jobs' do
       status 202
 
-      job = Job.create(vault(params[:vault_name]), type, options)
+      options = JSON.parse(request.body.read)
+
+      job = Job.create(vault(params[:vault_name]), options)
 
       headers \
         "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}/jobs/#{job.id}",
-        'x-amz-job-id' => job.id
+        'x-amz-job-id' => job.id.to_s
+
+      job.id.to_s
     end
 
     # Describe Job
-    get ':account_id/vaults/:vault_name/jobs/:job_id' do
+    get '/:account_id/vaults/:vault_name/jobs/:job_id' do
       status 201
 
       job = Job.new(vault(params[:vault_name]), params[:job_id])
 
-      json({
-        "JobId" => job.id
-      })
+      job.to_json
     end
 
     # Get Job Output
-    get ':account_id/vaults/:vault_name/jobs/:job_id/output' do
+    get '/:account_id/vaults/:vault_name/jobs/:job_id/output' do
       job = Job.new(vault(params[:vault_name]), params[:job_id])
       return job.content
     end
 
     # List Jobs
-    get ':account_id/vaults/:vault_name/jobs' do
+    get '/:account_id/vaults/:vault_name/jobs' do
       jobs = vault(params[:vault_name]).jobs
 
-      json({
-        "JobList" => jobs.map { |j|
-          {
-            "JobId" => j.id
-          }
-        }
-        })
+      {
+        "JobList" => jobs.map(&:to_json)
+        }.to_json
     end
   end
 end
