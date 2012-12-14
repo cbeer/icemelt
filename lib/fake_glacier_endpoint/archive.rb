@@ -45,7 +45,7 @@ module FakeGlacierEndpoint
     end
 
     def description
-      Namaste::Dir.new(ppath.path).first.value rescue nil
+      Namaste::Dir.new(ppath.path).what.first.value rescue nil
     end
 
     def ppath

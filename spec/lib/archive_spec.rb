@@ -48,7 +48,7 @@ describe FakeGlacierEndpoint::Archive do
 
   describe "#description" do
     it "the description should be empty by default" do
-      subject.description.should == ''
+      subject.description.should == nil
     end
 
     it "should read the namaste tag" do

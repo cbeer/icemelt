@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'fog'
 
-describe "Fog Integration Spec" do
+describe "Fog Integration Spec", :acceptance => true do
   before(:all) do
   	begin
       vault = subject.vaults.get 'myvault'

@@ -8,8 +8,10 @@ gem 'anvl'
 gem 'namaste'
 	gem 'thin'
 
-group :test do
+group :development, :test do
 	gem 'rspec'
 	gem 'simplecov'
 	gem 'fog'
+	gem 'yard'
+	gem 'childprocess'
 end
