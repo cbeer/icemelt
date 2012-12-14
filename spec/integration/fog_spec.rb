@@ -3,11 +3,11 @@ require 'fog'
 
 describe "Fog Integration Spec" do
   before(:all) do
-    begin
+  	begin
       vault = subject.vaults.get 'myvault'
-      vault.delete
-    rescue 
-      
+      vault.destroy
+    rescue => e
+      puts e.inspect
     end
   end
 

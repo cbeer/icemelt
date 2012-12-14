@@ -22,13 +22,6 @@ describe FakeGlacierEndpoint::Vault do
   	  File.exists?(File.join(TEST_DATA_PATH, 'fake_vault_name'))
   	end
 
-  	it "should raise errors if the vault already exists" do
-      vault = FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name2')
-
-      expect {
-        FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name2')
-      }.to raise_error
-  	end
   end
 
   describe ".list" do

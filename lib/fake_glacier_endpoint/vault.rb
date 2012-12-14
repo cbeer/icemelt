@@ -55,7 +55,6 @@ module FakeGlacierEndpoint
     end
 
     def create!
-      raise VaultAlreadyExistsException.new("That vault name is already taken") if exists?
       @pairtree ||= Pairtree.at(vault_path, :create => true)
     end
 
@@ -117,7 +116,7 @@ module FakeGlacierEndpoint
 
  
     def arn
-      id.to_s
+      "arn:fake:glacier:localhost:012345678901:vaults/#{id.to_s}"
     end
     private
     def dbm
@@ -126,10 +125,6 @@ module FakeGlacierEndpoint
 
     def vault_path
       @vault_path ||= File.join(data_root, vault_name)
-    end
-
-    class VaultAlreadyExistsException < StandardError
-
     end
   end
 end

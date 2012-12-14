@@ -25,8 +25,8 @@ module FakeGlacierEndpoint
     put '/:account_id/vaults/:vault_name' do
       status 201
       headers \
-        "Date" => '',
-        "Location" => request.fullpath
+        "Date" => Time.now.strftime('%c'),
+        "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}"
       Vault.create(data_root, params[:vault_name])
 
       nil
@@ -36,7 +36,7 @@ module FakeGlacierEndpoint
     delete '/:account_id/vaults/:vault_name' do
       status 204
       headers \
-        "Date" => ''
+        "Date" => Time.now.strftime('%c')
       vault(params[:vault_name]).delete
 
       nil
