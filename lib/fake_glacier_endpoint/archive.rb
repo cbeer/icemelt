@@ -1,8 +1,9 @@
 require 'namaste'
 require 'securerandom'
+      require 'securerandom'
 module FakeGlacierEndpoint
   class Archive
-  	def self.create vault, options
+  	def self.create vault, options = {}
       archive_id = Archive.mint_archive_id
       a = Archive.new(vault, archive_id)
    
@@ -12,7 +13,6 @@ module FakeGlacierEndpoint
   	end
 
   	def self.mint_archive_id
-      require 'securerandom'
       SecureRandom.urlsafe_base64(138)
   	end
 
@@ -24,13 +24,13 @@ module FakeGlacierEndpoint
     end
 
     def content= file
-      ppath.open('content', 'rw') do |f|
+      ppath.open('content', 'w') do |f|
         f.write file
       end
     end
 
     def description= description
-      Namaste::Dir.new(ppath.path).what= description
+      description_tag.value= description
     end
 
     def delete
@@ -42,11 +42,26 @@ module FakeGlacierEndpoint
     end
 
     def description
-      Namaste::Dir.new(ppath.path).what
+      description_tag.value
     end
 
     def ppath
-      vault.pairtree.mk(archive_id)
+      @ppath ||= vault.pairtree.mk(id)
+    end
+
+    def sha256
+
+    end
+
+    def description_tag
+      dir = Namaste::Dir.new(ppath.path)
+
+      if dir.what.length > 0
+        dir.what.first
+      else
+      	dir.what = ''
+      	dir.what.first     
+      end
     end
   end
 end

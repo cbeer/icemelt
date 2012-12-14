@@ -1,4 +1,6 @@
 require 'pairtree'
+require 'fileutils'
+
 module FakeGlacierEndpoint
   class Vault
     def self.create data_root, vault_name
@@ -13,13 +15,14 @@ module FakeGlacierEndpoint
       return to_enum :list, data_root unless block_given?
 
       Dir.glob(File.join(data_root, '*')) do |f|
-        yield f.gsub(data_root, '').gsub('/', '')
+      	next unless File.directory?(f) and File.exists?(File.join(f, 'pairtree_root'))
+        yield self.new(data_root, f.gsub(data_root, '').gsub('/', ''))
       end
     end
 
     def self.clear! data_root
-      raise "!!!" unless defined?(:TEST_DATA_PATH) and data_root == TEST_DATA_PATH
-      FileUtils.rm_rf(data_root)
+      raise "THIS METHOD SHOULD ONLY BE CALLED IN TESTS" unless defined?(:TEST_DATA_PATH) and data_root == TEST_DATA_PATH
+      FileUtils.rm_r(data_root, :force => true)
     end
 
     attr_reader :data_root, :vault_name
@@ -55,12 +58,20 @@ module FakeGlacierEndpoint
     end
 
     def size
-      0
+      require 'find'
+      size = 0
+      Find.find(vault_path) { |f| size += File.size(f) if File.file?(f) }
+      size
     end
 
     def pairtree
       @pairtree ||= Pairtree.at(vault_path)
     end
+
+    def jobs
+
+    end
+    
     private
 
     def vault_path
