@@ -25,7 +25,7 @@ module FakeGlacierEndpoint
 
       Dir.glob(File.join(data_root, '*')) do |f|
       	next unless File.directory?(f) and File.exists?(File.join(f, 'pairtree_root'))
-        yield self.new(data_root, f.gsub(data_root, '').gsub('/', ''))
+        yield Vault.new(data_root, f.gsub(data_root, '').gsub('/', ''))
       end
     end
 
@@ -83,7 +83,21 @@ module FakeGlacierEndpoint
     end
 
     def jobs
-      dbm.map { |k,v| Job.new(self, k.to_i, Marshal.load(v)) }
+      dbm.map { |k,v| job(k.to_i) }
+    end
+
+    def job id
+      Job.new(self, id, Marshal.load(dbm[id.to_s]))
+    end
+
+    def archives
+      return to_enum :archives unless block_given?
+
+      pairtree.list.map { |x| yield Archive.new(self, x) }
+    end
+
+    def archive id
+      Archive.new(self, id)
     end
 
     def add_job job_id, options
@@ -92,9 +106,7 @@ module FakeGlacierEndpoint
       @dbm = nil
     end
 
-    def 
-
-    def to_json
+    def aws_attributes
 {'CreationDate' => create_date,
         'LastInventoryDate' => last_inventory_date,
         'NumberOfArchives' => count,

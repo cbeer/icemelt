@@ -7,6 +7,8 @@ require 'noid'
 module FakeGlacierEndpoint
   class Application < Sinatra::Base
 
+    enable  :sessions, :logging
+
     def self.data_root
       @data_root ||= File.expand_path('../../data', File.dirname(__FILE__))
     end
@@ -48,7 +50,7 @@ module FakeGlacierEndpoint
       headers \
         "Content-Type" => 'application/json'
 
-      v.to_json
+      v.aws_attributes.to_json
     end
 
     # List Vaults
@@ -62,7 +64,7 @@ module FakeGlacierEndpoint
 
       {
         "Marker" => nil,
-        "VaultList" => vaults.map(&:to_json)
+        "VaultList" => vaults.map(&:aws_attributes)
       	}.to_json
 
     end
@@ -93,7 +95,7 @@ module FakeGlacierEndpoint
       Archive.new(vault(params[:vault_name]), params[:archive_id]).delete
     
       headers \
-        "Date" => Time.now
+        "Date" => Time.now.strftime('%c')
 
       nil
     end
@@ -105,7 +107,6 @@ module FakeGlacierEndpoint
       status 202
 
       options = JSON.parse(request.body.read)
-      puts options.inspect
 
       job = Job.create(vault(params[:vault_name]), options)
 
@@ -113,30 +114,47 @@ module FakeGlacierEndpoint
         "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}/jobs/#{job.id}",
         'x-amz-job-id' => job.id.to_s
 
-      job.id.to_s
+      nil
     end
 
     # Describe Job
     get '/:account_id/vaults/:vault_name/jobs/:job_id' do
-      status 201
+      status 200
 
-      job = vault(params[:vault_name]).jobs[params[:job_id]]
+      headers \
+        "Content-Type" => 'application/json'
 
-      job.to_json
+      job = vault(params[:vault_name]).job params[:job_id]
+
+      job.aws_attributes.to_json
     end
 
     # Get Job Output
     get '/:account_id/vaults/:vault_name/jobs/:job_id/output' do
-      job = vault(params[:vault_name]).jobs[params[:job_id]]
-      return job.content
+      v = vault(params[:vault_name])
+      job = v.job params[:job_id]
+
+      case job.type
+        when "archive-retrieval"
+          job.content
+        when "inventory-retrieval"
+          {
+            "VaultARN" => v.arn,
+            "InventoryDate" => Time.now.strftime('%c'),
+            "ArchiveList" => job.content.map { |x| x.aws_attributes }
+          }.to_json
+      end
     end
 
     # List Jobs
     get '/:account_id/vaults/:vault_name/jobs' do
       jobs = vault(params[:vault_name]).jobs
 
+      headers \
+        "Content-Type" => 'application/json'
+
       {
-        "JobList" => jobs.map(&:to_json)
+        "JobList" => jobs.map(&:aws_attributes)
         }.to_json
     end
   end

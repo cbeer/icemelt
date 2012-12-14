@@ -1,14 +1,12 @@
 require 'namaste'
 require 'securerandom'
-      require 'securerandom'
 module FakeGlacierEndpoint
   class Archive
   	def self.create vault, options = {}
       archive_id = Archive.mint_archive_id
       a = Archive.new(vault, archive_id)
    
-      a.description = options.fetch(:archive_description, '')
-
+      a.description = options[:archive_description] unless options[:archive_description].nil? or options[:archive_description].empty?
       a
   	end
 
@@ -30,7 +28,12 @@ module FakeGlacierEndpoint
     end
 
     def description= description
-      description_tag.value= description
+      tags = Namaste::Dir.new(ppath.path).what
+      if tags.first
+        tags.first.vaule = description
+      else
+        Namaste::Dir.new(ppath.path).what = description
+      end
     end
 
     def delete
@@ -42,7 +45,7 @@ module FakeGlacierEndpoint
     end
 
     def description
-      description_tag.value
+      Namaste::Dir.new(ppath.path).first.value rescue nil
     end
 
     def ppath
@@ -53,15 +56,8 @@ module FakeGlacierEndpoint
       ''
     end
 
-    def description_tag
-      dir = Namaste::Dir.new(ppath.path)
-
-      if dir.what.length > 0
-        dir.what.first
-      else
-      	dir.what = ''
-      	dir.what.first     
-      end
+    def aws_attributes
+      { "ArchiveId" => id }
     end
   end
 end
