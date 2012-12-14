@@ -25,6 +25,7 @@ module FakeGlacierEndpoint
     end
 
     def to_json
+    	puts options.inspect
       { 'JobID' => id, 'Type' => options['Type'] }
     end
 

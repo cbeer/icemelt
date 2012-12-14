@@ -83,11 +83,13 @@ module FakeGlacierEndpoint
     end
 
     def jobs
-      dbm.map { |k,v| Job.new(self, k) }
+      dbm.map { |k,v| Job.new(self, k.to_i, Marshal.load(v)) }
     end
 
     def add_job job_id, options
-      dbm.store(job_id, Marshal.dump(options))
+      dbm.store(job_id.to_s, Marshal.dump(options))
+      dbm.close
+      @dbm = nil
     end
 
     def 

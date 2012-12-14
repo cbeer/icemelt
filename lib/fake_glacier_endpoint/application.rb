@@ -105,6 +105,7 @@ module FakeGlacierEndpoint
       status 202
 
       options = JSON.parse(request.body.read)
+      puts options.inspect
 
       job = Job.create(vault(params[:vault_name]), options)
 
@@ -119,14 +120,14 @@ module FakeGlacierEndpoint
     get '/:account_id/vaults/:vault_name/jobs/:job_id' do
       status 201
 
-      job = Job.new(vault(params[:vault_name]), params[:job_id])
+      job = vault(params[:vault_name]).jobs[params[:job_id]]
 
       job.to_json
     end
 
     # Get Job Output
     get '/:account_id/vaults/:vault_name/jobs/:job_id/output' do
-      job = Job.new(vault(params[:vault_name]), params[:job_id])
+      job = vault(params[:vault_name]).jobs[params[:job_id]]
       return job.content
     end
 
