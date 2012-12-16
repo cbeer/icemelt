@@ -2,7 +2,7 @@ require 'pairtree'
 require 'fileutils'
 require 'dbm'
 
-module FakeGlacierEndpoint
+module Icemelt
   class Vault
     def self.create data_root, vault_name
       vault = Vault.new(data_root, vault_name)

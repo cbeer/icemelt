@@ -1,4 +1,7 @@
-Mock out the Glacier API, so we can do (cross-language/distributed) test-driven development against the Glacier API, without waiting hours (and spending $$$) to retrieve content.
+[![Build Status](https://travis-ci.org/cbeer/icemelt.png?branch=master)](https://travis-ci.org/cbeer/icemelt)
+
+This is a Sinatra application that mimics the AWS Glacier API (more or
+less),  so we can do (cross-language/distributed) test-driven development against the Glacier API, without waiting hours (and spending $$$) to retrieve content.
 
 ```bash
 $ thin start

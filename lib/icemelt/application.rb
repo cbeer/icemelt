@@ -4,7 +4,7 @@ require 'namaste'
 require 'anvl'
 require 'noid'
 
-module FakeGlacierEndpoint
+module Icemelt
   class Application < Sinatra::Base
 
     enable  :sessions, :logging

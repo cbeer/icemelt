@@ -1,6 +1,6 @@
 require 'namaste'
 require 'securerandom'
-module FakeGlacierEndpoint
+module Icemelt
   class Archive
   	def self.create vault, options = {}
       archive_id = Archive.mint_archive_id

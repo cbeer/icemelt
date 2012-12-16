@@ -8,7 +8,7 @@ require 'simplecov'
 SimpleCov.start
 
 require 'rspec/autorun'
-require 'fake_glacier_endpoint'
+require 'icemelt'
 
 TEST_DATA_PATH = File.expand_path('data', File.dirname(__FILE__))
 

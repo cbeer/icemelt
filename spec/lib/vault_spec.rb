@@ -1,24 +1,24 @@
 require 'spec_helper'
 
-describe FakeGlacierEndpoint::Vault do
+describe Icemelt::Vault do
   after(:each) do
-    FakeGlacierEndpoint::Vault.clear!(TEST_DATA_PATH)
+    Icemelt::Vault.clear!(TEST_DATA_PATH)
   end
 
   subject {
-  	FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'subject_vault')
+  	Icemelt::Vault.create(TEST_DATA_PATH, 'subject_vault')
   }
 
   describe ".clear!" do
     it "should work" do
       # FileUtils.should_receive(:rm_r).with(TEST_DATA_PATH, :force => true).at_least(1).time
-      FakeGlacierEndpoint::Vault.clear!(TEST_DATA_PATH)
+      Icemelt::Vault.clear!(TEST_DATA_PATH)
     end
   end
 
   describe ".create" do
   	it "should create a vault in the data root" do
-      vault = FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
+      vault = Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
   	  File.exists?(File.join(TEST_DATA_PATH, 'fake_vault_name'))
   	end
 
@@ -26,23 +26,23 @@ describe FakeGlacierEndpoint::Vault do
 
   describe ".list" do
   	it "should list existing vaults" do
-      FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
-      FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name2')
-      FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name3')
-      FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name4')
+      Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
+      Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name2')
+      Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name3')
+      Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name4')
 
-      FakeGlacierEndpoint::Vault.list(TEST_DATA_PATH).map { |x| x.vault_name }.should include('fake_vault_name', 'fake_vault_name2', 'fake_vault_name3', 'fake_vault_name4')
+      Icemelt::Vault.list(TEST_DATA_PATH).map { |x| x.vault_name }.should include('fake_vault_name', 'fake_vault_name2', 'fake_vault_name3', 'fake_vault_name4')
   	end
   end
 
   describe "#exists?" do
     it "should be true if the vault directory exists" do
-      vault = FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
+      vault = Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
       vault.should exist
     end
 
     it "should be false otherwise" do
-      v = FakeGlacierEndpoint::Vault.new(TEST_DATA_PATH, 'this_doesnt_exist')
+      v = Icemelt::Vault.new(TEST_DATA_PATH, 'this_doesnt_exist')
       v.should_not exist
     end
   end
@@ -53,7 +53,7 @@ describe FakeGlacierEndpoint::Vault do
   describe "create_date" do
   	it "should be the directory ctime" do
       t = Time.now
-      vault = FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
+      vault = Icemelt::Vault.create(TEST_DATA_PATH, 'fake_vault_name')
       t1 = Time.now
       vault.create_date.should be_within(1 + (t1 - t)).of(t)
   	end

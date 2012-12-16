@@ -1,5 +1,5 @@
 
-module FakeGlacierEndpoint
+module Icemelt
   class Job
   	def self.create vault, options
   		raise unless ['archive-retrieval', 'inventory-retrieval'].include? options['Type']

@@ -1,23 +1,23 @@
 require 'spec_helper'
 
-describe FakeGlacierEndpoint::Archive do
+describe Icemelt::Archive do
 
   before(:all) do
-    FakeGlacierEndpoint::Vault.create(TEST_DATA_PATH, 'archive_subject_path')
+    Icemelt::Vault.create(TEST_DATA_PATH, 'archive_subject_path')
   end
 
   after(:all) do
-    FakeGlacierEndpoint::Vault.clear!(TEST_DATA_PATH)
+    Icemelt::Vault.clear!(TEST_DATA_PATH)
   end
 
-  subject { FakeGlacierEndpoint::Archive.create(vault) }
+  subject { Icemelt::Archive.create(vault) }
 
-  let(:vault) { FakeGlacierEndpoint::Vault.new(TEST_DATA_PATH, 'archive_subject_path') }
+  let(:vault) { Icemelt::Vault.new(TEST_DATA_PATH, 'archive_subject_path') }
 
   describe ".create" do
     it "should create a new archive" do
-      FakeGlacierEndpoint::Archive.stub(:mint_archive_id).and_return('qwerty')
-      archive = FakeGlacierEndpoint::Archive.create(vault, :archive_description => 'ASFD')
+      Icemelt::Archive.stub(:mint_archive_id).and_return('qwerty')
+      archive = Icemelt::Archive.create(vault, :archive_description => 'ASFD')
   
       archive.id.should == "qwerty"
       archive.description.should == 'ASFD'
