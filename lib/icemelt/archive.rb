@@ -59,5 +59,31 @@ module Icemelt
     def aws_attributes
       { "ArchiveId" => id }
     end
+
+    def prepare_for_multipart_upload!
+      FileUtils.touch(File.join(ppath.path, '.MULTIPART_UPLOAD'))
+    end
+
+    def complete_multipart_upload!
+      FileUtils.rm(File.join(ppath.path, '.MULTIPART_UPLOAD'))
+    end
+
+    def multipart_upload?
+      File.exists? File.join(ppath.path, '.MULTIPART_UPLOAD')
+    end
+
+    def add_multipart_content content, hash, from, to
+      FileUtils.touch(File.join(ppath.path, 'content'))
+      ppath.open('content', 'r+') do |f|
+        f.seek from
+        f.write content.to_s
+      end
+
+      ppath.open('.MULTIPART_UPLOAD', 'a') do |f|
+
+        f.puts "#{from}-#{to}: #{hash}"
+
+      end
+    end
   end
 end

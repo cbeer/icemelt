@@ -57,4 +57,34 @@ describe Icemelt::Archive do
       subject.description.should == "PID/DSID"
     end
   end
+
+  describe "#prepare_for_multipart_upload!" do
+    it "should mark this as a multipart upload" do
+      subject.should_not be_multipart_upload
+      subject.prepare_for_multipart_upload!
+      subject.should be_multipart_upload
+    end
+
+  end
+
+  describe "#complete_multipart_upload!" do
+    it "should end the multipart upload" do
+      subject.should_not be_multipart_upload
+      subject.prepare_for_multipart_upload!
+      subject.complete_multipart_upload!
+      subject.should_not be_multipart_upload
+    end
+  end
+
+  describe "#add_multipart_content" do
+    it "should write content directly into the file at the appropriate place" do
+      subject.add_multipart_content "a", "a1b2c3", 0, 1
+      subject.add_multipart_content "b", "a1b2c3", 2, 3
+      subject.add_multipart_content "c", "a1b2c3", 5, 6
+      subject.add_multipart_content "d", "a1b2c3", 0, 1
+
+      subject.content.should == "d\0b\0\0c"
+      
+    end
+  end
 end

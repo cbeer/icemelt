@@ -88,6 +88,66 @@ module Icemelt
       nil  
     end
 
+    post '/:account_id/vaults/:vault_name/multipart-uploads' do
+      status 201
+
+      options = {}
+      options[:archive_description] = request['x-amz-archive-description']
+      
+      a = Archive.create(vault(params[:vault_name]), options)
+      a.prepare_for_multipart_upload!
+
+      headers \
+        "Date" => Time.now.strftime('%c'),
+        "x-amz-sha256-tree-hash" => a.sha256,
+        "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/multipart-uploads/#{a.id}",
+        "x-multipart-upload-id" => a.id
+
+      nil
+    end
+
+    post '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
+      a = Archive.new(vault(params[:vault_name]), params[:archive_id])
+      raise unless a.multipart_upload?
+      a.complete_multipart_upload!
+
+      headers \
+        "Date" => Time.now.strftime('%c'),
+        "x-amz-sha256-tree-hash" => a.sha256,
+        "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/archives/#{a.id}",
+        "x-amz-archive-id" => a.id
+
+      nil  
+
+    end
+
+    put '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
+      status 204
+
+      a = Archive.new(vault(params[:vault_name]), params[:archive_id])
+      raise unless a.multipart_upload?
+
+      from, to = request['Content-Range'].scan(/bytes (\d+)-(\d+)/).first
+      hash = request['x-amz-sha256-tree-hash']
+      a.add_multipart_content(request.body.read, hash, from.to_i, to.to_i)
+
+      headers \
+        "Date" => Time.now.strftime('%c')
+
+      nil
+    end
+
+    delete '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
+      status 204
+
+      Archive.new(vault(params[:vault_name]), params[:archive_id]).delete
+    
+      headers \
+        "Date" => Time.now.strftime('%c')
+
+      nil
+    end
+
     # Delete Archive
     delete '/:account_id/vaults/:vault_name/archives/:archive_id' do
       status 204
