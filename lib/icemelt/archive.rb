@@ -22,8 +22,13 @@ module Icemelt
     end
 
     def content= file
+      @content = file
+    end
+
+    def save
+      @content.rewind if @content.respond_to? :rewind
       ppath.open('content', 'w') do |f|
-        f.write file.to_s
+        f.write @content.to_s
       end
     end
 
@@ -37,7 +42,10 @@ module Icemelt
     end
 
     def delete
-      vault.pairtree.purge! archive_id
+      vault.pairtree.purge! id
+      @id = nil
+      @vault = nil
+      @ppath = nil
     end
 
     def content

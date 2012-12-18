@@ -78,6 +78,7 @@ module Icemelt
       
       a = Archive.create(vault(params[:vault_name]), options)
       a.content = request.body.read
+      a.save
 
       headers \
         "Date" => Time.now.strftime('%c'),
