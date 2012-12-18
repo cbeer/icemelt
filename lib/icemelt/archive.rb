@@ -97,5 +97,11 @@ module Icemelt
 
       end
     end
+
+    def == other
+
+      self.vault == other.vault && self.id == other.id
+
+    end
   end
 end
