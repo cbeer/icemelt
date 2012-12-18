@@ -167,7 +167,6 @@ module Icemelt
       status 202
 
       options = JSON.parse(request.body.read)
-
       job = Job.create(vault(params[:vault_name]), options)
 
       headers \
@@ -193,6 +192,10 @@ module Icemelt
     get '/:account_id/vaults/:vault_name/jobs/:job_id/output' do
       v = vault(params[:vault_name])
       job = v.job params[:job_id]
+
+      raise "??" if job.expired?
+
+      # what happens if the job was expired?
 
       case job.type
         when "archive-retrieval"
