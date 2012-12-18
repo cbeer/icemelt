@@ -71,9 +71,8 @@ module Icemelt
     end
 
     def size
-      require 'find'
       size = 0
-      Find.find(vault_path) { |f| size += File.size(f) if File.file?(f) and File.basename(f) == 'content' }
+      archives { |a| size += a.size }
       size
     end
 
