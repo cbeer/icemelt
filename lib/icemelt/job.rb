@@ -59,7 +59,7 @@ module Icemelt
     end
 
     def save
-      vault.add_job(id, @options)
+      vault.add_job(self)
     end
 
     def aws_attributes

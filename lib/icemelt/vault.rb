@@ -99,8 +99,8 @@ module Icemelt
       Archive.new(self, id)
     end
 
-    def add_job job_id, options
-      dbm.store(job_id.to_s, Marshal.dump(options))
+    def add_job job
+      dbm.store(job.id.to_s, Marshal.dump(job.options))
       dbm.close
       @dbm = nil
     end
