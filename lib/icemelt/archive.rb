@@ -30,7 +30,7 @@ module Icemelt
     def description= description
       tags = Namaste::Dir.new(ppath.path).what
       if tags.first
-        tags.first.vaule = description
+        tags.first.value = description
       else
         Namaste::Dir.new(ppath.path).what = description
       end

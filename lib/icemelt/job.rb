@@ -1,6 +1,10 @@
 
 module Icemelt
   class Job
+    def self.max_completion_time_delay
+      ENV.fetch('MAX_COMPLETION_TIME_DELAY',5)
+    end
+
   	def self.create vault, options
   		raise unless ['archive-retrieval', 'inventory-retrieval'].include? options['Type']
   	  j = Job.new(vault, self.mint_job_id, options)
@@ -98,7 +102,7 @@ module Icemelt
 
     private
     def randomize_completion_time
-      options['completion_time'] ||= Time.now + Random.rand(60)
+      options['completion_time'] ||= Time.now + Random.rand(self.class.max_completion_time_delay)
     end
 
     def configure_job_expiration_time
