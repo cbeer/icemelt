@@ -16,30 +16,25 @@ task :default => :ci
 
 desc "Continuous Integration build"
 task :ci do
-  Rake::Task['spec:functional'].invoke
+ ENV['DATA_ROOT'] = File.expand_path('spec/integration_data')
+  begin
  # Rake::Task['yard'].invoke
    	 process = ChildProcess.build('thin', 'start')
   	 process.io.inherit!
   	 process.start
   	 sleep 5
-  Rake::Task['spec:integration'].invoke
-  process.stop
+  Rake::Task['spec'].invoke
+ensure
+  FileUtils.rm_r(File.expand_path('spec/integration_data'), :force => true)
+  begin
+    process.poll_for_exit(10)
+  rescue ChildProcess::TimeoutError
+    process.stop # tries increasingly harsher methods to kill the process.
+  end
+end
 end
 
 RSpec::Core::RakeTask.new do |spec|
-end
-
-
-namespace :spec do
-
-  RSpec::Core::RakeTask.new(:functional) do |spec|
-    spec.rspec_opts = "--tag ~integration --tag ~acceptance"
-
-  end
-  
-  RSpec::Core::RakeTask.new(:integration) do |spec|
-    spec.rspec_opts = "--tag acceptance"
-  end
 end
 
 require 'yard'
