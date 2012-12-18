@@ -10,7 +10,7 @@ module Icemelt
     enable  :sessions, :logging
 
     def self.data_root
-      @data_root ||= File.expand_path('../../data', File.dirname(__FILE__))
+      @data_root ||= ENV['DATA_ROOT'] || File.expand_path('../../data', File.dirname(__FILE__))
     end
 
     def data_root
