@@ -25,6 +25,20 @@ describe Icemelt::Archive do
     end
   end
 
+  describe "#delete" do
+    it "should purge the entry from the vault" do
+      ppath = subject.ppath
+      subject.delete
+      File.should_not exist(ppath.path)
+    end
+  end
+
+  describe "#==" do
+    it "should equal any archive with the same vault and id" do
+      subject.should == mock(:id => subject.id, :vault => subject.vault)
+    end
+  end
+
   describe "#content" do
   	it "should read the content from the content file in the ppath" do
       subject.ppath.stub(:read).and_return('asdf')
@@ -35,6 +49,7 @@ describe Icemelt::Archive do
   describe "#content=" do
   	it "should write the content to a file" do
       subject.content = "asdf"
+      subject.save
       subject.ppath.read('content').should == "asdf"
   	end
   end
@@ -43,6 +58,12 @@ describe Icemelt::Archive do
     it "should write a namaste tag" do
       subject.description = "PID/DSID"
       Namaste::Dir.new(subject.ppath.path).what.first.value.should == "PID/DSID"
+    end
+    it "should only write a single description tag" do
+      subject.description = "PID/DSID"
+      subject.description = "aPID/DSID"
+      subject.description = "zPID/DSID"
+      Namaste::Dir.new(subject.ppath.path).what.first.value.should == "zPID/DSID"
     end
   end
 
@@ -55,6 +76,34 @@ describe Icemelt::Archive do
       subject.description = "PID/DSID"
       
       subject.description.should == "PID/DSID"
+    end
+  end
+
+  describe "#size" do
+    it "should equal the size of its content" do
+      subject.size.should == 0
+      subject.content = "asdf"
+      subject.save
+      subject.size.should == 4
+    end
+  end
+
+  describe "#sha256" do
+    it "should be the tree hash for the content" do
+      subject.content = 'a'
+      subject.save
+      subject.sha256.should == "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
+    end
+  end
+
+  describe "aws attributes" do
+    it "should be the AWS attributes" do
+      subject.aws_attributes.should include('ArchiveId' => subject.id,
+                                            'ArchiveDescription' => subject.description,
+                                            'CreationDate' => subject.create_date,
+                                            'Size' => subject.size,
+                                            'SHA256TreeHash' => subject.sha256  
+        )
     end
   end
 
