@@ -79,6 +79,14 @@ module Icemelt
       }
     end
 
+    def status
+      if complete?
+        "Complete"
+      else
+        "InProgress"
+      end
+    end
+
     def complete?
       Time.now > options['completion_time']
     end
