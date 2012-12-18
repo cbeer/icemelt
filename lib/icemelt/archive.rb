@@ -56,6 +56,10 @@ module Icemelt
       ''
     end
 
+    def size
+      File.size(File.join(ppath.path, 'content'))
+    end
+
     def aws_attributes
       { "ArchiveId" => id }
     end

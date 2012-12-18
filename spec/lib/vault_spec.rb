@@ -80,7 +80,7 @@ describe Icemelt::Vault do
 
   describe "#size" do
     it "should be the size of all the archives under it" do
-       subject.size.should == 124 # 124 happens to be the size of a blank pairtree
+       subject.size.should == 0
     end
   end
 
