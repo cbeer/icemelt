@@ -6,7 +6,8 @@ gem 'pairtree'
 gem 'noid'
 gem 'anvl'
 gem 'namaste'
-	gem 'thin'
+gem 'thin'
+gem 'fog'
 
 group :development, :test do
 	gem 'rake'

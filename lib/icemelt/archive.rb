@@ -1,5 +1,6 @@
 require 'namaste'
 require 'securerandom'
+require 'fog'
 module Icemelt
   class Archive
   	def self.create vault, options = {}
@@ -61,15 +62,38 @@ module Icemelt
     end
 
     def sha256
-      ''
+      Fog::AWS::Glacier::TreeHash.digest(File.read(content_path)) if exists?
+    end
+
+    def content_path
+      File.join(ppath.path, 'content')
+    end
+
+    def exists?
+      File.exists?(content_path)
     end
 
     def size
-      File.size(File.join(ppath.path, 'content'))
+      if exists?
+        File.size(content_path)
+      else
+        0
+      end
+    end
+
+    def create_date
+      return File.ctime(content_path) if exists?
+      File.ctime(ppath.path)
     end
 
     def aws_attributes
-      { "ArchiveId" => id }
+      { 
+        "ArchiveId" => id,
+        "ArchiveDescription" => description,
+        "CreationDate" => create_date,
+        "Size" => size,
+        "SHA256TreeHash" => sha256
+       }
     end
 
     def prepare_for_multipart_upload!
