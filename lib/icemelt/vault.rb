@@ -51,7 +51,7 @@ module Icemelt
     end
 
     def delete
-      true
+      FileUtils.rm_r vault_path, :force => true
     end
 
     def create!
