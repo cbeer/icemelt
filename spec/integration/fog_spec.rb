@@ -23,9 +23,18 @@ describe "Fog Integration Spec", :acceptance => true do
     subject.vaults.get(vault.id).should be_nil
   end
 
+  it "should describe vaults" do
+    subject.describe_vault('myvault').body['VaultName'].should == 'myvault'
+  end
+
   it "should list vault" do
     subject.vaults.should have(1).item
     subject.vaults.should 
+  end
+
+  it "should do single-part uploads" do
+    subject.vaults.create :id => 'myvaultwithcontent'
+    subject.create_archive('myvaultwithcontent', 'data body')
   end
 
   it "should add archives to vaults" do
