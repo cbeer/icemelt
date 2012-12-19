@@ -44,13 +44,18 @@ module Icemelt
 
     # Describe Vault
     get '/:account_id/vaults/:vault_name' do
-      status 200
+      begin
+        v = vault(params[:vault_name])
+        status 200
 
-      v = vault(params[:vault_name])
-      headers \
-        "Content-Type" => 'application/json'
+        headers \
+          "Content-Type" => 'application/json'
 
-      v.aws_attributes.to_json
+        v.aws_attributes.to_json
+      rescue
+        status 404
+        return
+      end
     end
 
     # List Vaults
@@ -102,16 +107,21 @@ module Icemelt
         "Date" => Time.now.strftime('%c'),
         "x-amz-sha256-tree-hash" => a.sha256,
         "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/multipart-uploads/#{a.id}",
-        "x-multipart-upload-id" => a.id
+        "x-amz-multipart-upload-id" => a.id
 
       nil
     end
 
     post '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
-      a = Archive.new(vault(params[:vault_name]), params[:archive_id])
-      raise unless a.multipart_upload?
-      a.complete_multipart_upload!
+      status 201
 
+      a = vault(params[:vault_name]).archive(params[:archive_id])
+
+      if a.multipart_upload?
+        a.complete_multipart_upload!
+      else
+      end
+      
       headers \
         "Date" => Time.now.strftime('%c'),
         "x-amz-sha256-tree-hash" => a.sha256,
@@ -125,13 +135,13 @@ module Icemelt
     put '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
       status 204
 
-      a = Archive.new(vault(params[:vault_name]), params[:archive_id])
-      raise unless a.multipart_upload?
-
-      from, to = request['Content-Range'].scan(/bytes (\d+)-(\d+)/).first
+      a = vault(params[:vault_name]).archive(params[:archive_id])
+      raise "This isn't a multipart upload; #{a.inspect}" unless a.multipart_upload?
+      from, to = request.env['HTTP_CONTENT_RANGE'].scan(/bytes (\d+)-(\d+)/).first
       hash = request['x-amz-sha256-tree-hash']
       a.add_multipart_content(request.body.read, hash, from.to_i, to.to_i)
 
+      puts Dir.glob(File.join(a.ppath, '*')).inspect
       headers \
         "Date" => Time.now.strftime('%c')
 
@@ -141,7 +151,7 @@ module Icemelt
     delete '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
       status 204
 
-      Archive.new(vault(params[:vault_name]), params[:archive_id]).delete
+      vault(params[:vault_name]).archive(params[:archive_id]).delete
     
       headers \
         "Date" => Time.now.strftime('%c')
@@ -153,7 +163,7 @@ module Icemelt
     delete '/:account_id/vaults/:vault_name/archives/:archive_id' do
       status 204
 
-      Archive.new(vault(params[:vault_name]), params[:archive_id]).delete
+      vault(params[:vault_name]).archive(params[:archive_id]).delete
     
       headers \
         "Date" => Time.now.strftime('%c')

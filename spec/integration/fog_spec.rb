@@ -17,14 +17,38 @@ describe "Fog Integration Spec", :acceptance => true do
   	subject.vaults.create :id => 'myvault'
   end
 
+  it "should destroy vaults" do
+    vault = subject.vaults.create :id => 'myvaultabc'
+    vault.destroy
+    subject.vaults.get(vault.id).should be_nil
+  end
+
   it "should list vault" do
     subject.vaults.should have(1).item
+    subject.vaults.should 
   end
 
   it "should add archives to vaults" do
     vault = subject.vaults.get 'myvault'
 
     vault.archives.create :body => 'asdfgh', :multipart_chunk_size => 1024*1024
+  end
+
+  it "should create multipart archives" do
+    vault = subject.vaults.create :id => 'myvaultabc'
+    body = StringIO.new('x'*1024*1024*2)
+    body.rewind
+    archive = vault.archives.create(:body => body, :multipart_chunk_size => 1024*1024)
+    
+    job = vault.jobs.create :type => Fog::AWS::Glacier::Job::INVENTORY
+
+    job.wait_for {ready?}
+
+    json = JSON.parse(job.get_output.body)
+    json['ArchiveList'].select { |x| x['ArchiveId'] == archive.id }.first['Size'].should == 2*1024*1024
+
+    archive.destroy
+    vault.destroy
   end
 
   it "should list inventories" do
