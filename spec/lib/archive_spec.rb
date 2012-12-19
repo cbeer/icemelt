@@ -127,6 +127,8 @@ describe Icemelt::Archive do
 
   describe "#add_multipart_content" do
     it "should write content directly into the file at the appropriate place" do
+      
+      subject.prepare_for_multipart_upload!
       subject.add_multipart_content "a", "a1b2c3", 0, 1
       subject.add_multipart_content "b", "a1b2c3", 2, 3
       subject.add_multipart_content "c", "a1b2c3", 5, 6
