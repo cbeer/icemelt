@@ -46,7 +46,7 @@ module Icemelt
     end
 
     def archive
-       vault.archive(options["ArchiveId"])
+       vault.archive(options["ArchiveId"]) if archive_retrieval?
     end
 
     def content
