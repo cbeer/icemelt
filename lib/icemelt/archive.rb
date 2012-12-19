@@ -115,6 +115,7 @@ module Icemelt
         f.write content.to_s
       end
 
+      prepare_for_multipart_upload!
       ppath.open('.MULTIPART_UPLOAD', 'a') do |f|
 
         f.puts "#{from}-#{to}: #{hash}"
