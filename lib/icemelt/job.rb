@@ -13,6 +13,8 @@ module Icemelt
       j
   	end
 
+    ##
+    # Mint a new auto-incrementing id
   	def self.mint_job_id
       @@i ||= 0
       @@i += 1

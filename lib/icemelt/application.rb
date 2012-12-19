@@ -98,7 +98,6 @@ module Icemelt
       status 201
 
       options = {}
-      puts request.inspect
       options[:archive_description] = request.env['HTTP_X_AMZ_ARCHIVE_DESCRIPTION']
       
       a = Archive.create(vault(params[:vault_name]), options)

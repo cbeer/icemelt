@@ -41,7 +41,7 @@ describe Icemelt::Archive do
 
   describe "#content" do
   	it "should read the content from the content file in the ppath" do
-      subject.ppath.stub(:read).and_return('asdf')
+      subject.ppath.stub(:open).and_yield StringIO.new("asdf") 
       subject.content.should == "asdf"
   	end
   end

@@ -46,7 +46,7 @@ module Icemelt
     # Save the content to the file
     def save
       @content.rewind if @content.respond_to? :rewind
-      ppath.open('content', 'w') do |f|
+      ppath.open('content', 'wb') do |f|
         f.write @content.to_s
       end
     end
@@ -79,7 +79,9 @@ module Icemelt
     # Read the content from archive
     #
     def content
-      ppath.read('content')
+      ppath.open('content', 'rb') { |io|
+        io.read
+      }
     end
 
     ##
@@ -167,7 +169,7 @@ module Icemelt
       raise "This isn't a multipart upload" unless multipart_upload?
 
       FileUtils.touch(File.join(ppath.path, 'content'))
-      ppath.open('content', 'r+') do |f|
+      ppath.open('content', 'rb+') do |f|
         f.seek from
         f.write content.to_s
       end
