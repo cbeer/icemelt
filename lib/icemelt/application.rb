@@ -79,7 +79,7 @@ module Icemelt
       status 201
 
       options = {}
-      options[:archive_description] = request['x-amz-archive-description']
+      options[:archive_description] = request.env['HTTP_X_AMZ_ARCHIVE_DESCRIPTION']
       
       a = Archive.create(vault(params[:vault_name]), options)
       a.content = request.body.read
@@ -98,7 +98,8 @@ module Icemelt
       status 201
 
       options = {}
-      options[:archive_description] = request['x-amz-archive-description']
+      puts request.inspect
+      options[:archive_description] = request.env['HTTP_X_AMZ_ARCHIVE_DESCRIPTION']
       
       a = Archive.create(vault(params[:vault_name]), options)
       a.prepare_for_multipart_upload!
