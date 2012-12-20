@@ -45,7 +45,7 @@ describe "Fog Integration Spec", :acceptance => true do
 
   it "should create multipart archives" do
     vault = subject.vaults.create :id => 'myvaultabc'
-    body = StringIO.new('x'*1024*1024*2)
+    body = StringIO.new(`openssl rand 2097152`)
     body.rewind
     archive = vault.archives.create(:body => body, :multipart_chunk_size => 1024*1024)
     
@@ -56,9 +56,19 @@ describe "Fog Integration Spec", :acceptance => true do
     json = JSON.parse(job.get_output.body)
     json['ArchiveList'].select { |x| x['ArchiveId'] == archive.id }.first['Size'].should == 2*1024*1024
 
+    body.rewind
+
+    job = vault.jobs.create(:type => Fog::AWS::Glacier::Job::ARCHIVE, :archive_id => archive.id)
+
+    job.wait_for {ready?}
+
+    body.rewind
+    job.get_output.body.force_encoding('ASCII').should == body.read.force_encoding('ASCII')
+
     archive.destroy
     vault.destroy
   end
+
 
   it "should list inventories" do
     vault = subject.vaults.get 'myvault'
