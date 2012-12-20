@@ -34,10 +34,15 @@ module Icemelt
     
     # Delete Vault
     delete '/:account_id/vaults/:vault_name' do
-      status 204
-      headers \
-        "Date" => Time.now.strftime('%c')
-      vault(params[:vault_name]).delete
+      v = vault(params[:vault_name])
+      if v.exists?  
+        status 204
+        headers \
+          "Date" => Time.now.strftime('%c')
+        v.delete
+      else
+        status 404
+      end
 
       nil
     end
@@ -54,7 +59,7 @@ module Icemelt
         v.aws_attributes.to_json
       rescue
         status 404
-        return
+        nil
       end
     end
 
@@ -141,7 +146,6 @@ module Icemelt
       hash = request['x-amz-sha256-tree-hash']
       a.add_multipart_content(request.body.read, hash, from.to_i, to.to_i)
 
-      puts Dir.glob(File.join(a.ppath, '*')).inspect
       headers \
         "Date" => Time.now.strftime('%c')
 
