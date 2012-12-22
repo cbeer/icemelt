@@ -29,7 +29,7 @@ module Icemelt
 
       while id.nil?
         id_to_mint = SecureRandom.urlsafe_base64(138)
-        id = id_to_mint unless vault.archive(id).exists?
+        id = id_to_mint unless vault.archive(id_to_mint).exists?
       end
 
       id
