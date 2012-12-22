@@ -91,7 +91,11 @@ module Icemelt
     def archives
       return to_enum :archives unless block_given?
 
-      pairtree.list.map { |x| yield Archive.new(self, x) }
+      pairtree.list.map do |x| 
+        a = Archive.new(self, x) 
+        next if a.multipart_upload?
+        yield a
+      end
     end
 
     def archive id
