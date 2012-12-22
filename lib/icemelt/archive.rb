@@ -7,8 +7,13 @@ module Icemelt
     # Create a new archive package
     # @param [Icemelt::Vault] vault
     # @param [Hash] options
+    # @example Creating a new archive
+    #   a = Icemelt::Archive.create(vault)
+    #   a.content = File.open('Rakefile', 'r')
+    #   s.save
+    # @return [Icemelt::Archive] a new Icemelt::Archive
   	def self.create vault, options = {}
-      archive_id = Archive.mint_archive_id
+      archive_id = Archive.mint_archive_id(vault)
       a = Archive.new(vault, archive_id)
    
       a.description = options[:archive_description] unless options[:archive_description].nil? or options[:archive_description].empty?
@@ -17,8 +22,17 @@ module Icemelt
 
     ##
     # Mint a new archive ID
-  	def self.mint_archive_id
-      SecureRandom.urlsafe_base64(138)
+    #
+    # @return [String] a (vault-unique) 138-byte archive identifier
+  	def self.mint_archive_id(vault)
+      id = nil
+
+      while id.nil?
+        id_to_mint = SecureRandom.urlsafe_base64(138)
+        id = id_to_mint unless vault.archive(id).exists?
+      end
+
+      id
   	end
 
     attr_reader :vault, :id
@@ -77,7 +91,7 @@ module Icemelt
 
     ##
     # Read the content from archive
-    #
+    # @return [String]
     def content
       ppath.open('content', 'rb') { |io|
         io.read
@@ -86,38 +100,42 @@ module Icemelt
 
     ##
     # Archive description
-    #
+    # @return [String] the user-supllied archive description
     def description
       Namaste::Dir.new(ppath.path).what.first.value rescue nil
     end
 
     ##
     # Find the archive in the vault
-    #
+    # @return [Pairtree::Obj]
     def ppath
       @ppath ||= vault.pairtree.mk(id)
     end
 
     ##
-    # Calculate the sha256 for the content
+    # Calculate the sha256 tree hash for the content
+    # @return [String]
     def sha256
       Fog::AWS::Glacier::TreeHash.digest(File.read(content_path)) if exists?
     end
 
     ##
     # Path to the content file
+    # @return [String] path to the underlying archive content
     def content_path
       File.join(ppath.path, 'content')
     end
 
     ##
     # Does the content exist?
+    # @return [Boolean]
     def exists?
       File.exists?(content_path)
     end
 
     ##
     # Calculate the size of the archive
+    # @return [Integer]
     def size
       if exists?
         File.size(content_path)
@@ -128,6 +146,7 @@ module Icemelt
 
     ##
     # Get the archive create date
+    # @return [Date]
     def create_date
       return File.ctime(content_path) if exists?
       File.ctime(ppath.path)
@@ -135,6 +154,7 @@ module Icemelt
 
     ##
     # Attributes for AWS JSON responses
+    # @return [Hash]
     def aws_attributes
       { 
         "ArchiveId" => id,
@@ -159,12 +179,19 @@ module Icemelt
 
     ##
     # Is this archive a multipart upload?
+    # @return [Boolean]
     def multipart_upload?
       File.exists? File.join(ppath.path, '.MULTIPART_UPLOAD')
     end
 
     ##
     # Add multipart content to the file
+    # @example Adding multipart content to the archive
+    #    my_archive.prepare_for_multipart_upload!
+    #    my_archive.add_multipart_content "asdf", {}, 0, 3
+    #    my_archive.add_multipart_content "fdsa", {}, 4, 7
+    #    my_archive.complete_multipart_upload!
+    #    my_archive.content # => "asdffdsa"
     def add_multipart_content content, hash, from, to
       raise "This isn't a multipart upload" unless multipart_upload?
 

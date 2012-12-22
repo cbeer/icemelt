@@ -15,5 +15,6 @@ group :development, :test do
 	gem 'simplecov'
 	gem 'fog'
 	gem 'yard'
+  gem 'redcarpet'
 	gem 'childprocess'
 end
