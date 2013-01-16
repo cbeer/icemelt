@@ -18,14 +18,22 @@ module Icemelt
     end
 
     def vault vault_name
-      Vault.find(data_root, vault_name)
+      Vault.new(data_root, vault_name)
+    end
+
+    def common_response_headers
+      headers \
+        "Date" => Time.now.strftime('%c'),
+        "x-amzn-RequestId" => Time.now.strftime('%c')
     end
 
   	# Create Vault
     put '/:account_id/vaults/:vault_name' do
       status 201
+      
+      common_response_headers
+
       headers \
-        "Date" => Time.now.strftime('%c'),
         "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}"
       Vault.create(data_root, params[:vault_name])
 
@@ -35,31 +43,42 @@ module Icemelt
     # Delete Vault
     delete '/:account_id/vaults/:vault_name' do
       v = vault(params[:vault_name])
+      common_response_headers
       if v.exists?  
         status 204
-        headers \
-          "Date" => Time.now.strftime('%c')
         v.delete
+        nil
       else
         status 404
+        headers \
+          "Content-Type" => 'application/json'
+        ({
+          "code": "ResourceNotFoundException",
+          "message": "Vault not found for ARN: " + v.arn,
+          "type": "Client"
+        }).to_json
       end
 
-      nil
     end
 
     # Describe Vault
     get '/:account_id/vaults/:vault_name' do
+      common_response_headers
+      headers \
+        "Content-Type" => 'application/json'
       begin
         v = vault(params[:vault_name])
         status 200
 
-        headers \
-          "Content-Type" => 'application/json'
 
         v.aws_attributes.to_json
       rescue
         status 404
-        nil
+        ({
+          "code": "ResourceNotFoundException",
+          "message": "Vault not found for ARN: " + v.arn,
+          "type": "Client"
+        }).to_json
       end
     end
 
@@ -68,6 +87,7 @@ module Icemelt
       vaults = Vault.list(data_root)
 
       status 200
+      common_response_headers
 
       headers \
         "Content-Type" => 'application/json'
@@ -82,6 +102,7 @@ module Icemelt
     # Upload Archive
     post '/:account_id/vaults/:vault_name/archives' do
       status 201
+      common_response_headers
 
       options = {}
       options[:archive_description] = request.env['HTTP_X_AMZ_ARCHIVE_DESCRIPTION']
@@ -91,7 +112,6 @@ module Icemelt
       a.save
 
       headers \
-        "Date" => Time.now.strftime('%c'),
         "x-amz-sha256-tree-hash" => a.sha256,
         "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/archives/#{a.id}",
         "x-amz-archive-id" => a.id
@@ -101,6 +121,7 @@ module Icemelt
 
     post '/:account_id/vaults/:vault_name/multipart-uploads' do
       status 201
+      common_response_headers
 
       options = {}
       options[:archive_description] = request.env['HTTP_X_AMZ_ARCHIVE_DESCRIPTION']
@@ -109,7 +130,6 @@ module Icemelt
       a.prepare_for_multipart_upload!
 
       headers \
-        "Date" => Time.now.strftime('%c'),
         "x-amz-sha256-tree-hash" => a.sha256,
         "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/multipart-uploads/#{a.id}",
         "x-amz-multipart-upload-id" => a.id
@@ -119,6 +139,7 @@ module Icemelt
 
     post '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
       status 201
+      common_response_headers
 
       a = vault(params[:vault_name]).archive(params[:archive_id])
 
@@ -128,7 +149,6 @@ module Icemelt
       end
       
       headers \
-        "Date" => Time.now.strftime('%c'),
         "x-amz-sha256-tree-hash" => a.sha256,
         "Location" => "/#{params[:account_id]}/vaults/#{params[:vault_name]}/archives/#{a.id}",
         "x-amz-archive-id" => a.id
@@ -139,6 +159,7 @@ module Icemelt
 
     put '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
       status 204
+      common_response_headers
 
       a = vault(params[:vault_name]).archive(params[:archive_id])
       raise "This isn't a multipart upload; #{a.inspect}" unless a.multipart_upload?
@@ -146,19 +167,15 @@ module Icemelt
       hash = request['x-amz-sha256-tree-hash']
       a.add_multipart_content(request.body.read, hash, from.to_i, to.to_i)
 
-      headers \
-        "Date" => Time.now.strftime('%c')
-
       nil
     end
 
     delete '/:account_id/vaults/:vault_name/multipart-uploads/:archive_id' do
       status 204
+      common_response_headers
 
       vault(params[:vault_name]).archive(params[:archive_id]).delete
-    
-      headers \
-        "Date" => Time.now.strftime('%c')
+  
 
       nil
     end
@@ -166,12 +183,10 @@ module Icemelt
     # Delete Archive
     delete '/:account_id/vaults/:vault_name/archives/:archive_id' do
       status 204
+      common_response_headers
 
       vault(params[:vault_name]).archive(params[:archive_id]).delete
     
-      headers \
-        "Date" => Time.now.strftime('%c')
-
       nil
     end
 
@@ -179,20 +194,38 @@ module Icemelt
 
     # Initiate a Job
     post '/:account_id/vaults/:vault_name/jobs' do
+      common_response_headers
+
+      v = vault(params[:vault_name])
+
+      if v.exists?      
       status 202
 
       options = JSON.parse(request.body.read)
-      job = Job.create(vault(params[:vault_name]), options)
+      job = Job.create(v, options)
 
       headers \
         "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}/jobs/#{job.id}",
         'x-amz-job-id' => job.id.to_s
 
-      nil
+        nil
+      else
+        status 404
+        headers \
+          "Content-Type" => 'application/json'
+
+                ({
+          "code": "ResourceNotFoundException",
+          "message": "Vault not found for ARN: " + v.arn,
+          "type": "Client"
+        }).to_json
+      end
     end
 
     # Describe Job
     get '/:account_id/vaults/:vault_name/jobs/:job_id' do
+      common_response_headers
+
       status 200
 
       headers \
@@ -205,6 +238,7 @@ module Icemelt
 
     # Get Job Output
     get '/:account_id/vaults/:vault_name/jobs/:job_id/output' do
+      common_response_headers
       v = vault(params[:vault_name])
       job = v.job params[:job_id]
 
@@ -216,6 +250,9 @@ module Icemelt
         when "archive-retrieval"
           job.content
         when "inventory-retrieval"
+          headers \
+            "Content-Type" => 'application/json'
+
           {
             "VaultARN" => v.arn,
             "InventoryDate" => Time.now.strftime('%c'),
@@ -226,6 +263,8 @@ module Icemelt
 
     # List Jobs
     get '/:account_id/vaults/:vault_name/jobs' do
+      common_response_headers
+
       jobs = vault(params[:vault_name]).jobs
 
       headers \

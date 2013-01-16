@@ -1,10 +1,16 @@
 
 module Icemelt
   class Job
+    ##
+    # How long to delay the completion of jobs to simulate
+    # asynchonous operation.
+    # @return [Integer]
     def self.max_completion_time_delay
       ENV.fetch('MAX_COMPLETION_TIME_DELAY',5)
     end
 
+    ##
+    # Create a new Job
   	def self.create vault, options
   		raise unless ['archive-retrieval', 'inventory-retrieval'].include? options['Type']
   	  j = Job.new(vault, self.mint_job_id, options)
