@@ -200,14 +200,14 @@ module Icemelt
       v = vault(params[:vault_name])
 
       if v.exists?      
-      status 202
+        status 202
 
-      options = JSON.parse(request.body.read)
-      job = Job.create(v, options)
+        options = JSON.parse(request.body.read)
+        job = Job.create(v, options)
 
-      headers \
-        "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}/jobs/#{job.id}",
-        'x-amz-job-id' => job.id.to_s
+        headers \
+          "Location" => "#{params[:account_id]}/vaults/#{params[:vault_name]}/jobs/#{job.id}",
+          'x-amz-job-id' => job.id.to_s
 
         nil
       else
@@ -227,6 +227,18 @@ module Icemelt
     get '/:account_id/vaults/:vault_name/jobs/:job_id' do
       common_response_headers
 
+      if job.expired? or job.new?
+        headers \
+          "Content-Type" => 'application/json'
+          status 404
+        
+        return ({
+          "code"    => "ResourceNotFoundException",
+          "message" => "The job ID was not found: #{job.id}",
+          "type"    => "Client"
+        }).to_json
+      end
+
       status 200
 
       headers \
@@ -243,9 +255,17 @@ module Icemelt
       v = vault(params[:vault_name])
       job = v.job params[:job_id]
 
-      raise "??" if job.expired?
-
-      # what happens if the job was expired?
+      if job.expired? or job.new?
+        headers \
+          "Content-Type" => 'application/json'
+          status 404
+        
+        return ({
+          "code"    => "ResourceNotFoundException",
+          "message" => "The job ID was not found: #{job.id}",
+          "type"    => "Client"
+        }).to_json
+      end
 
       case job.type
         when "archive-retrieval"

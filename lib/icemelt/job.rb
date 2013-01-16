@@ -44,6 +44,10 @@ module Icemelt
       options['Format'] || 'JSON'
     end
 
+    def new?
+      options.fetch(:_saved, false)
+    end
+
     def action
       case type
         when "archive-retrieval"
@@ -71,6 +75,7 @@ module Icemelt
     end
 
     def save
+      self.options[:_saved] = true
       vault.add_job(self)
     end
 
