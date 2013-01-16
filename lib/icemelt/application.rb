@@ -3,6 +3,7 @@ require 'json'
 require 'namaste'
 require 'anvl'
 require 'noid'
+require 'csv'
 
 module Icemelt
   class Application < Sinatra::Base
@@ -53,9 +54,9 @@ module Icemelt
         headers \
           "Content-Type" => 'application/json'
         ({
-          "code": "ResourceNotFoundException",
-          "message": "Vault not found for ARN: " + v.arn,
-          "type": "Client"
+          "code"    => "ResourceNotFoundException",
+          "message" => "Vault not found for ARN: " + v.arn,
+          "type"    => "Client"
         }).to_json
       end
 
@@ -75,9 +76,9 @@ module Icemelt
       rescue
         status 404
         ({
-          "code": "ResourceNotFoundException",
-          "message": "Vault not found for ARN: " + v.arn,
-          "type": "Client"
+          "code"    => "ResourceNotFoundException",
+          "message" => "Vault not found for ARN: " + v.arn,
+          "type"    => "Client"
         }).to_json
       end
     end
@@ -214,10 +215,10 @@ module Icemelt
         headers \
           "Content-Type" => 'application/json'
 
-                ({
-          "code": "ResourceNotFoundException",
-          "message": "Vault not found for ARN: " + v.arn,
-          "type": "Client"
+        ({
+          "code"    => "ResourceNotFoundException",
+          "message" => "Vault not found for ARN: " + v.arn,
+          "type"    => "Client"
         }).to_json
       end
     end
@@ -250,14 +251,28 @@ module Icemelt
         when "archive-retrieval"
           job.content
         when "inventory-retrieval"
-          headers \
-            "Content-Type" => 'application/json'
+          case job.format
+            when 'JSON'
+              headers \
+                "Content-Type" => 'application/json'
 
-          {
-            "VaultARN" => v.arn,
-            "InventoryDate" => Time.now.strftime('%c'),
-            "ArchiveList" => job.content.map { |x| x.aws_attributes }
-          }.to_json
+              {
+                "VaultARN" => v.arn,
+                "InventoryDate" => Time.now.strftime('%c'),
+                "ArchiveList" => job.content.map { |x| x.aws_attributes }
+              }.to_json
+            when 'CSV'
+              headers \
+                "Content-Type" => 'text/csv'
+
+              CSV.generate do |csv|
+                csv << ["ArchiveId", "ArchiveDescription", "CreationDate", "Size", "SHA256TreeHash"]
+                job.content.each do |x|
+                  csv << [x.id, x.description, x.create_date, x.size, x.sha256]
+                end
+              end  
+
+          end
       end
     end
 

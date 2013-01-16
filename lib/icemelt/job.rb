@@ -40,6 +40,10 @@ module Icemelt
       options['Type']
     end
 
+    def format
+      options['Format'] || 'JSON'
+    end
+
     def action
       case type
         when "archive-retrieval"
