@@ -7,6 +7,12 @@ less),  so we can do (cross-language/distributed) test-driven development agains
 $ thin start
 ```
 
+Or, tweak the retrieve-archive delay (in seconds):
+
+```bash
+$ MAX_COMPLETION_TIME_DELAY=120 thin start
+```
+
 Then, you can point your AWS REST client at the local Glacier mock, e.g.:
 
 ```ruby
