@@ -226,8 +226,11 @@ module Icemelt
     # Describe Job
     get '/:account_id/vaults/:vault_name/jobs/:job_id' do
       common_response_headers
-
-      if job.expired? or job.new?
+      
+      v = vault(params[:vault_name])
+      job = v.job(params[:job_id])
+      
+      if job.expired?
         headers \
           "Content-Type" => 'application/json'
           status 404
